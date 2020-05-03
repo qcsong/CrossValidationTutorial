@@ -1,0 +1,588 @@
+---
+title: "Cross-Validation Tutorial Appendics"
+author: "Q. Chelsea Song, Chen Tang, and Serena Wee"
+output:
+  word_document: default
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+# Appendix A
+
+Simulation is used to further demonstrate Observations 1, 2 and 3. Specifically, as each sample draw is influenced by sampling variation, results from the Shiny app may not always be as expected (i.e., by chance, it is possible for the calibrated model to fit better in the validation sample than in the calibration sample). We conducted three simulations, to help illustrate the expected result for each of the three observations. In each simulation, each sample draw and model fit were repeated 1,000 times, then the results were obtained by averaging across the 1,000 trials. Unless otherwise stated, we assume a quadratic relationship between arousal and performance. The overall simulation results support the observations that the model generalizability decreases as (a) the model becomes more complex, (b) calibration sample size decreases, and (c) effect size decreases.
+
+```{r}
+# Define a function to generate samples for simulation
+generate_sample <- function(N, R2){
+  mean_arousal <- 0
+  sd_arousal <- 3
+  arousal <- rnorm(n = N, mean = mean_arousal, sd = sd_arousal)
+  performance <- (300 - (arousal - 6) ^ 2) / 60
+  
+  # add noise to performance according to the value of R2 (R-squared)
+  snr <- R2 / (1 - R2) # calculate signal-to-noise ratio
+                       # (using equation from Hastie et al. (2009); p.401)
+  
+  sd_performance <- 0.6364 # this sd is approximated using simulation
+  sd_noise <- sd_performance / sqrt(snr)
+  noise <- rnorm(n = N, sd = sd_noise) # generate noise around 0
+  performance <- performance + noise
+  dat <- data.frame(arousal = arousal, performance = performance)
+  return(dat)
+}
+```
+
+## Observation 1: The Model Overfits the Calibration Sample
+
+In the following code, the `lm()` function was used to fit the regression models.
+
+```{r}
+# Set a random seed
+set.seed(8424)
+
+# Set population effect size
+R2_pop <- .25
+ 
+# Set calibration sample size
+n_cal <- 50
+ 
+# Set model complexity (degree of polynomial)
+degree <- 2
+ 
+# Set validation sample size
+n_val <- 1000
+
+# According to this population R-squared value,
+# the population MSE can be computed as
+MSE_pop <- 0.6364^2 / (R2_pop / (1 - R2_pop))
+# Population MSE is the sum of the squared residuals,
+# which is equivalent to the variance of noise
+# in the generate_sample() function
+
+# Create vectors to store the calibration sample R-squared
+# and MSE for each trial
+R2 <- NA
+MSE <- NA
+
+for(i in 1:1000) {
+  # The following procedure is repeated 1000 times.
+  data <- generate_sample(N=n_cal, R2=R2_pop)
+
+  # Fit the regression model to the sample and save 
+  # the resulting model as “ob1_mod”
+  ob1_mod <- lm(performance ~ poly(arousal, degree), data=data)
+  
+  # Store R-squared and MSE for each trial
+  R2[i] <- cor(ob1_mod$fitted.values, data$performance)^2
+  MSE[i] <- mean(summary(ob1_mod)$residuals^2)
+}
+
+# Calculate the average calibration R-squared and MSE,
+# averaged across 1000 trials
+R2_cal <- mean(R2)
+MSE_cal <- mean(MSE)
+
+# Output the results
+cat(paste0(
+  "R-squared of the population model: ", round(R2_pop, 2), "\n",
+  "R-squared of the current model: ", round(R2_cal, 2), "\n",
+  "MSE of the population model: ", round(MSE_pop, 2), "\n",
+  "MSE of the current model: ", round(MSE_cal, 2), "\n"))
+
+```
+
+The output showed that the $R^2$ for the current model is larger than the population $R^2$. Meanwhile, $MSE$ for the current model is smaller than the population $MSE$. This is because the model is capturing sample-specific variations that is unrepresentative of the population. As a result, the model is overfitted to the calibration sample.
+
+## Observation 2: The Model Obtained from the Calibration Sample Tends to Not Generalize Well to New (Validation) Samples
+
+Apply the model obtained from the calibration sample to a new (validation) sample and check the prediction accuracy, $R^2_{validation}$ and $MSE_{validation}$.
+
+```{r}
+# Set a random seed
+set.seed(8424)
+ 
+# Set population effect size
+R2_pop <- .25
+ 
+# Set calibration sample size
+n_cal <- 50
+ 
+# Set model complexity (degree of polynomial)
+degree <- 2
+ 
+# Set validation sample size
+n_val <- 1000
+
+# Create vectors to store the results for each trial
+R2_cal <- NA
+MSE_cal <- NA
+R2_val <- NA
+MSE_val <- NA
+
+for(i in 1:1000) {
+
+  # The following procedure is repeated 1000 times.
+  data_cal <- generate_sample(N=n_cal, R2=R2_pop)
+  data_val <- generate_sample(N=n_val, R2=R2_pop)
+  ob2_mod <- lm(performance ~ poly(arousal, degree), data=data_cal)
+  R2_cal[i] <- cor(ob2_mod$fitted.values, data_cal$performance)^2
+  MSE_cal[i] <- mean(summary(ob2_mod)$residuals^2)
+
+  # Use the fitted regression model to predict task performance 
+  # from arousal in the validation sample
+  yhat_val <- predict(ob2_mod, data_val)
+
+  # Calculate validation R-squared and MSE
+  R2_val[i] <- cor(yhat_val, data_val$performance)^2
+  MSE_val[i] <- mean((yhat_val - data_val$performance)^2)
+}
+
+# Calculate the average validation sample R-squared and MSE,
+# averaged across 1000 trials
+R2_cal_mean <- mean(R2_cal)
+R2_val_mean <- mean(R2_val)
+MSE_cal_mean <- mean(MSE_cal)
+MSE_val_mean <- mean(MSE_val)
+
+# Output the results
+cat(paste0(
+  "Average Calibration R-squared: ", round(R2_cal_mean, 2), "\n",
+  "Average Validation R-squared: ", round(R2_val_mean, 2), "\n",
+  "Average Calibration MSE: ", round(MSE_cal_mean, 2), "\n",
+  "Average Validation MSE: ", round(MSE_val_mean, 2), "\n"))
+
+```
+
+Notice that $R_{validation}^2$ is smaller than $R_{calibration}^2$: there is a 15% reduction in R2 ($\frac{.27 - .23}{.27}=.15$). Also, $MSE_{validation}$ is larger than $MSE_{calibration}$: there is a 0.17 increase in MSE ($1.30-1.13=0.17$). This suggests that when a model fitted on one (calibration) sample is used to make predictions in a new (validation) sample, the model performs less well in the new sample.
+
+## Observation 3: Model Generalizability is Influenced by (a) Model Complexity, (b) Sample Size, and (c) Effect Size
+
+In Observation 3, we will vary (a) model complexity, (b) calibration sample size, and (c) effect size and compare the results with Observation 2. 
+
+### Observation 3a: The model generalizes less well when the model is complex
+
+Now let us explore how model complexity influences model generalizability. Increase the model complexity by specifying a cubic (instead of quadratic) regression model. Then, apply the calibrated models to new samples and obtain prediction accuracy.
+
+```{r}
+# Set a random seed
+set.seed(8424)
+
+# Set population effect size
+R2_pop <- .25
+ 
+# Set calibration sample size
+n_cal <- 50
+ 
+# Set model complexity (degree of polynomial)
+degree <- 3 # Cubic regression, a more complex model
+ 
+# Set validation sample size
+n_val <- 1000
+
+# Create vectors to store the calibration
+# and validation sample R-squared for each trial
+R2_cal <- NA
+MSE_cal <- NA
+R2_val <- NA
+MSE_val <- NA
+
+for(i in 1:1000) {
+  
+  # The following procedures are repeated 1000 times
+  data_cal <- generate_sample(N=n_cal, R2=R2_pop)
+  data_val <- generate_sample(N=n_val, R2=R2_pop)
+  ob3a_mod <- lm(performance ~ poly(arousal, degree), data=data_cal)
+  R2_cal[i] <- cor(ob3a_mod$fitted.values, data_cal$performance)^2
+  MSE_cal[i] <- mean(summary(ob3a_mod)$residuals^2)
+  # Use the fitted regression model to predict task performance 
+  # from arousal in the validation sample
+  yhat_val <- predict(ob3a_mod, data_val)
+  
+  # Calculate validation R-squared and MSE
+  R2_val[i] <- cor(yhat_val, data_val$performance)^2
+  MSE_val[i] <- mean((yhat_val - data_val$performance)^2)
+}
+
+# Calculate the average validation sample R-squared,
+# averaged across 1000 trials
+R2_cal_mean <- mean(R2_cal)
+R2_val_mean <- mean(R2_val)
+MSE_cal_mean <- mean(MSE_cal)
+MSE_val_mean <- mean(MSE_val)
+
+# Output the results
+cat(paste0(
+  "Average Calibration R-squared: ", round(R2_cal_mean, 2), "\n",
+  "Average Validation R-squared: ", round(R2_val_mean, 2), "\n",
+  "Average Calibration MSE: ", round(MSE_cal_mean, 2), "\n",
+  "Average Validation MSE: ", round(MSE_val_mean, 2), "\n"))
+
+```
+
+Across 1,000 trials, $R_{validation}^2$ is smaller for the cubic regression model ($R_{validation}^2 = 0.20$) than for the quadratic regression model ($R_{validation}^2 = 0.23$, see Observation 2). Similarly, $MSE_{validation}$ is larger for the cubic regression model ($MSE_{validation} = 1.43$) than for the quadratic regression model ($MSE_{validation} = 1.30$, see Observation 2). Consistent with Observation 3a, a complex model generalizes less well than a simpler model when applied to a new sample.
+
+### Observation 3b: The model generalizes less well when calibration sample size is small
+
+Examine model generalizability for a smaller calibration sample size of 30 (as compared to 50). Apply the model obtained from the calibration sample to a new samples (validation) samples) and check the magnitude of prediction accuracy.
+
+```{r}
+# Set a random seed
+set.seed(8424)
+
+# Set population effect size
+R2_pop <- .25
+ 
+# Set calibration sample size
+n_cal <- 30 # smaller sample size
+ 
+# Set model complexity (degree of polynomial)
+degree <- 2
+ 
+# Set validation sample size
+n_val <- 1000
+ 
+# Create vectors to store the calibration
+# and validation sample R-squared and MSE for each trial
+R2_cal <- NA
+MSE_cal <- NA
+R2_val <- NA
+MSE_val <- NA
+
+for(i in 1:1000) {
+  
+  # The following procedures are repeated 1000 times.
+  data_cal <- generate_sample(N=n_cal, R2=R2_pop)
+  data_val <- generate_sample(N=n_val, R2=R2_pop)
+  ob3b_mod <- lm(performance ~ poly(arousal, degree), data=data_cal)
+  R2_cal[i] <- cor(ob3b_mod$fitted.values, data_cal$performance)^2
+  MSE_cal[i] <- mean(summary(ob3b_mod)$residuals^2)
+
+  # Use the fitted regression model to predict task performance 
+  # from arousal in the validation sample
+  yhat_val <- predict(ob3b_mod, data_val)
+  
+  # Calculate validation R-squared and MSE
+  R2_val[i] <- cor(yhat_val, data_val$performance)^2
+  MSE_val[i] <- mean((yhat_val - data_val$performance)^2)
+}
+
+# Calculate the average calibration and validation sample R-squared and MSE,
+# averaged across 1000 trials
+R2_cal_mean <- mean(R2_cal)
+R2_val_mean <- mean(R2_val)
+MSE_cal_mean <- mean(MSE_cal)
+MSE_val_mean <- mean(MSE_val)
+
+# Output the results
+cat(paste0(
+  "Average Calibration R-squared: ", round(R2_cal_mean, 2), "\n",
+  "Average Validation R-squared: ", round(R2_val_mean, 2), "\n",
+  "Average Calibration MSE: ", round(MSE_cal_mean, 2), "\n",
+  "Average Validation MSE: ", round(MSE_val_mean, 2), "\n"))
+
+```
+
+Notice that, across 1,000 trials, the average $R_{validation}^2 = 0.21$ is smaller when the same quadratic regression model was fitted on a small sample size ($N = 30$), as compared to when the quadratic regression model was fitted on a larger sample size ($N = 50$; average $R_{validation}^2 = 0.23$, see Observation 2). Similarly, the average $MSE_{validation} = 1.38$ is larger when the same quadratic regression model was fitted on a small sample size ($N = 30$), as compared to when the quadratic regression model was fitted on a larger sample size ($N = 50$; average $MSE_{validation} = 1.30$, see Observation 2). This suggests that a model fitted on a smaller calibration sample tends to generalize less well in a new sample, as compared to a model fitted on a larger calibration sample. 
+
+### Observation 3c: The model generalizes less well when the population effect size is small
+
+Examine model generalizability when the population effect size is $\rho^2 = .04$ (as compared to $\rho^2 = .25$). Apply the model obtained from the calibration sample to new samples and check the magnitude of prediction accuracy.
+
+```{r}
+# Set a random seed
+set.seed(8424)
+
+# Set population effect size
+R2_pop <- .04 # smaller effect size
+ 
+# Set calibration sample size
+n_cal <- 50
+ 
+# Set model complexity (degree of polynomial)
+degree <- 2
+ 
+# Set validation sample size
+n_val <- 1000
+
+# Create vectors to store the calibration
+# and validation sample R-squared for each trial
+R2_cal <- NA
+MSE_cal <- NA
+R2_val <- NA
+MSE_val <- NA
+
+for(i in 1:1000) {
+  
+  # The following procedures are repeated 1000 times.
+  data_cal <- generate_sample(N=n_cal, R2=R2_pop)
+  data_val <- generate_sample(N=n_val, R2=R2_pop)
+  ob3c_mod <- lm(performance ~ poly(arousal, degree), data=data_cal)
+  R2_cal[i] <- cor(ob3c_mod$fitted.values, data_cal$performance)^2
+  MSE_cal[i] <- mean(summary(ob3c_mod)$residuals^2)
+  
+  # Use the fitted regression model to predict task performance 
+  # from arousal in the validation sample
+  yhat_val <- predict(ob3c_mod, data_val)
+  
+  # Calculate validation R-squared and MSE
+  R2_val[i] <- cor(yhat_val, data_val$performance)^2
+  MSE_val[i] <- mean((yhat_val - data_val$performance)^2)
+}
+
+# Calculate the average validation sample R-squared,
+# averaged across 1000 trials
+R2_cal_mean <- mean(R2_cal)
+R2_val_mean <- mean(R2_val)
+MSE_cal_mean <- mean(MSE_cal)
+MSE_val_mean <- mean(MSE_val)
+
+# Output the results
+cat(paste0(
+  "Average Calibration R-squared: ", round(R2_cal_mean, 2), "\n",
+  "Average Validation R-squared: ", round(R2_val_mean, 2), "\n",
+  "Average Calibration MSE: ", round(MSE_cal_mean, 2), "\n",
+  "Average Validation MSE: ", round(MSE_val_mean, 2), "\n"))
+
+```
+
+Notice that, when the population effect size is .04, across 1,000 trials, the average $R_{validation}^2 = .03$ is less than half the average $R_{calibration}^2 = .08$ (63% reduction versus 15% reduction in Observation 2), and the average $MSE_{validation} = 10.42$ is less than the average $MSE_{calibration} = 9.03$ (1.39 increase versus 0.17 increase in Observation 2). This suggests that, when the population effect size is small, the model tend to generalize less well in a new sample. 
+
+# Appendix B
+
+## *k*-Fold cross-validation
+
+The R code below provides a step-by-step demonstration of a 5-fold cross-validation process.
+
+```{r}
+# Set random seed
+set.seed(8424)
+
+# Sample size
+n <- 300
+
+# Set population effect size
+R2_pop <- .16
+
+cv_data <- generate_sample(N=n, R2=R2_pop)
+
+# Specify a cubic regression model
+degree <- 3
+
+# Fit the cubic regression model using
+# the complete dataset and save the resulting model as “cv_original_mod”
+cv_original_mod <- lm(performance ~ poly(arousal, degree),
+                         data=cv_data)
+
+# Obtain R-squared and MSE of the model fitted to the complete dataset
+R2 <- cor(cv_original_mod$fitted.values, cv_data$performance)^2
+MSE <- mean(summary(cv_original_mod)$residuals^2)
+
+# Specify the number of folds
+k <- 5
+
+# Split the index of each observation into k equal subsets
+subsets <- split(x=1:n, f=sort(rep_len(x=1:k, length.out=n)))
+
+# Iterate through each fold
+R2_test <- NA
+MSE_test <- NA
+
+for(i in 1:k) {
+
+  # Split the dataset into k equal subsets
+  ind_test <- subsets[[i]]
+  
+  # For example, when i=1, the first subset of data
+  # (1/5 of the original dataset) is specified as the test set
+  data_test <- cv_data[ind_test, ]
+  
+  # Specify the rest of the data (4/5 of the original data)
+  # as the training set
+  data_train <- cv_data[-ind_test, ]
+  
+  # Fit the cubic regression model to the training set
+  mod_tmp <- lm(performance ~ poly(arousal, degree), data=data_train)
+  
+  # Test the model on the test set and calculate
+  # R-squared and MSE for this fold (iteration)
+  yhat_test <- predict(mod_tmp, data_test)
+  R2_test[i] <- cor(yhat_test, data_test$performance)^2
+  MSE_test[i] <- mean((yhat_test - data_test$performance)^2)
+}
+
+# Average Cross-validated R-squared and MSE (averaged across 5 folds)
+R2_kfold <- mean(R2_test)
+MSE_kfold <- mean(MSE_test)
+
+# Output the results
+cat(paste0(
+  "Model R-squared: ", round(R2, 2), "\n",
+  "Model MSE: ", round(MSE, 2), "\n",
+  "Cross-validated R-squared: ", round(R2_kfold, 2), "\n",
+  "Cross-validated MSE: ", round(MSE_kfold, 2), "\n"))
+```
+
+## Monte Carlo Cross-Validation (MCCV)
+
+The R code below provides a step-by-step demonstration of a Monte-Carlo cross-validation process. In this example, we use 80% of the sample to train the model and the remaining 20% to test the model. This is repeated 100 times to obtain an estimate of the cross-validated $R^2$ and $MSE$.
+
+```{r}
+# Using the same dataset and model as the above k-fold example
+
+set.seed(8424)
+
+# Specify to repeat 100 times
+rep <- 100
+
+# Set the test set size to 1/5 (20%) of the total sample size
+n_test <- ceiling(n / 5) # n_test = 60 for sample size 300
+
+R2_test <- NA
+MSE_test <- NA
+
+for(i in 1:rep) {
+   
+  # Repeat 100 times, each time randomly drawing 60 observations
+  # as the test set and the rest as the training set
+
+  ind_test <- sample(1:n, n_test) # randomly draw 60 numbers from 1 to 300
+  
+  # use the 60 numbers draw as row indices and get the test set
+  data_test <- cv_data[ind_test, ]
+  
+  # Specify the remaining 240 observations as the training set
+  data_train <- cv_data[-ind_test, ]
+  
+  # Fit the model with the training set 
+  mod_temp <- lm(performance ~ poly(arousal, degree), data=data_train)
+ 
+  # Use the fitted model to make predictions in test set
+  yhat_test <- predict(mod_temp, data_test)
+  
+  # Save cross-validated R-squared and MSE for each repetition
+  R2_test[i] <- cor(yhat_test, data_test$performance)^2
+  MSE_test[i] <- mean((yhat_test - data_test$performance)^2)  
+}
+
+# Average cross-validated R-squared (averaged across 100 repetitions)
+R2_mccv <- mean(R2_test)
+MSE_mccv <- mean(MSE_test)
+
+# Output the results
+cat(paste0(
+  "Model R-squared: ", round(R2, 2), "\n",
+  "Model MSE: ", round(MSE, 2), "\n",
+  "Cross-validated R-squared: ", round(R2_mccv, 2), "\n",
+  "Cross-validated MSE: ", round(MSE_mccv, 2), "\n"))
+```
+
+# Appendix C
+
+# Empirical Example using Machiavellianism Dataset
+
+In this example, we treat the 71,192 observations as the population and fit a regression model to obtain the population estimates (see R code below). As a result, in the population, $R2{_population} = .27$, and $MSE{_population} = 0.46$.
+
+
+```{r message = FALSE}
+# If the caret package is not installed run below line to install it
+# install.packages("caret")
+
+# Load the package
+library(caret)
+# The following dataset (from https://openpsychometrics.org/_rawdata/)
+# is used by the current overfitting and cross-validation example.
+# R Code for data preparation is available from the authors.
+
+# Import data
+data <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_data.csv")
+
+# Fit the original model on the complete dataset
+mod <- lm(mach ~ as.factor(gender) * age + O + C + E + A + N, data=data)
+
+# Summary of the regression model fitted on the complete dataset
+R2_pop <- round(summary(mod)$r.squared, 2)
+MSE_pop <- round(mean(mod$residuals^2), 2)
+cat(paste0("R2 of the population model is ", R2_pop, ";\n",
+           "MSE of the population model is ", MSE_pop, "."))
+```
+
+### Model Overfitting
+
+Now we randomly draw a sample from this population and fit the same model.
+
+```{r}
+set.seed(8424)  # Set a random seed to replicate results
+ 
+# Get a calibration sample
+n <- 300
+sample_cal <- data[sample(nrow(data), n), ]
+
+mod_cal <- lm(mach ~ as.factor(gender) * age + O + C + E + A + N,
+              data=sample_cal)
+
+# Calculate and save results
+R2_cal <- round(summary(mod_cal)$r.squared, 2)
+MSE_cal <- round(mean(mod_cal$residuals^2), 2)
+
+# Print results
+cat(paste0("R2 of the calibration model is ", R2_cal, ";\n",
+           "MSE of the calibration model is ", MSE_cal, "."))
+```
+
+We notice that in the sample ($n = 300$), the regression model has a larger $R^2$ and a smaller $MSE$ than the population model.
+
+### Cross-Validation
+
+#### *k*-fold
+
+We will carry out a 10-fold cross-validation. First, call the `trainControl()` function, and specify the method as *k*-fold cross-validation (i.e., “`CV`”), where the number of folds is equal to 10. Save the specified information in an object named `kfold_train_control`. Then, call the `train()` function to implement the k-fold cross-validation. The cross-validation results are saved in the object, "`kfold_cv`". 
+
+```{r}
+set.seed(8424) # Set a random seed to replicate results
+
+k <- 10 # Number of folds
+
+kfold_train_control <- trainControl(method="cv", number=k)
+
+kfold_cv <- train(mach ~ as.factor(gender) * age + O + C + E + A + N,
+                  data=sample_cal, method="lm", trControl=kfold_train_control)
+
+# Calculate and save results
+MSE_kfold <- round(mean(kfold_cv$resample$RMSE^2), 2)
+R2_kfold <- round(kfold_cv$results$Rsquared, 2)
+
+# Print results
+cat(paste0("k-fold cross-validated R2 is ", R2_kfold, ";\n",
+           "k-fold cross-validated MSE is ", MSE_kfold, "."))
+
+```
+
+It looks like there is a lot going on in this code, so let us talk about each of the input arguments (e.g., `data`, `method`, `trControl`) that are being specified. First, `data = sample_cal` specifies that the `sample_cal` dataset, the dataset that was used in the original analysis, is used to conduct the cross-validation. Next, `method = "lm"` specifies the statistical model as we need to indicate the model that will be used. In this case, we are using a linear (regression) model, and so we specify that `method = “lm”` and provide the actual form of the regression model that should be fitted. This is exactly the same model as the one fitted earlier. Again, we need to state what data to perform the cross-validation on (i.e., `data = sample_cal`), and lastly, to state that the specific method to be used, specified by `trControl = kfold_train_control`, tells the function that should correspond to the 10-fold cross-validation technique that we specified selected earlier, will be used to carry out the cross-validation.
+
+All the results are saved in the object called `kfold_cv`, we retrieved $MSE$ and $R^2$ from the `kfold_cv` object. Note that `caret` calculates $RMSE$ by default, so $MSE$ is calculated as the mean of squares the $RMSE$'s for all folds.
+
+#### Monte Carlo cross-validation (MCCV)
+
+To conduct MCCV, we specify that `method = “LGOCV”` (i.e., leave-group-out cross-validation, which is another term for Monte-Carlo cross-validation) in the `trainControl()` function. We set the number of repetitions to be 200 (`number = 200`; i.e., we ask for the train-then-test procedure to be conducted 200 times). In addition, we specify the proportion of data that should be randomly held out as a test set in each of the 200 repetitions. For example, `p = .6` means that 75% of the data set will be used as the *training* set, and therefore that 40% (i.e., `1 - p`) of the data set will be used as the *test* set. These pre-specifications will once again be saved in an object named `mc_train_control`.
+
+Next, the `train()` function will again be used to implement MCCV. As with conducting *k*-fold cross-validation using `train()`, we specify the data, analytic method, and linear regression equation to be used when conducting the MCCV. Similar to the *k*-fold example, results are retrieved and calculated from the final `mc_cv` object.
+
+```{r}
+set.seed(8424) # Set a random seed to replicate results
+
+R <- 200 # Number of repetitions
+
+mc_train_control <- trainControl(method="LGOCV", p=.6, number=R)
+
+mc_cv <- train(mach ~ as.factor(gender) * age + O + C + E + A + N,
+               data=sample_cal, method="lm", trControl=mc_train_control)
+
+# Calculate and save results
+MSE_mc <- round(mean(mc_cv$resample$RMSE^2), 2)
+R2_mc <-  round(mc_cv$results$Rsquared, 2)
+
+# Print results
+cat(paste0("Monte Carlo cross-validated R2 is ", R2_mc, ";\n",
+           "Monte Carlo cross-validated MSE is ", MSE_mc, "."))
+```
