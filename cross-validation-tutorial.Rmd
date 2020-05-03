@@ -490,6 +490,7 @@ In this example, we treat the 71,192 observations as the population and fit a re
 
 # Load the package
 library(caret)
+
 # The following dataset (from https://openpsychometrics.org/_rawdata/)
 # is used by the current overfitting and cross-validation example.
 # R Code for data preparation is available from the authors.
@@ -512,11 +513,12 @@ cat(paste0("R2 of the population model is ", R2_pop, ";\n",
 Now we randomly draw a sample from this population and fit the same model.
 
 ```{r}
-set.seed(8424)  # Set a random seed to replicate results
- 
-# Get a calibration sample
-n <- 300
-sample_cal <- data[sample(nrow(data), n), ]
+sample_cal <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_sample.csv")
+# This is a random sample drawn from the whole Mach dataset using below code.
+# Interested readers could vary the random seed to test with different samples.
+# set.seed(8424)
+# n <- 300
+# sample_cal <- data[sample(nrow(data), n), ]
 
 mod_cal <- lm(mach ~ as.factor(gender) * age + O + C + E + A + N,
               data=sample_cal)
