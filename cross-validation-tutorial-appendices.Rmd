@@ -515,7 +515,7 @@ Now we randomly draw a sample from this population and fit the same model.
 ```{r}
 sample_cal <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_sample.csv")
 # This is a random sample drawn from the whole Mach dataset using below code.
-# Interested readers could vary the random seed to test with different samples.
+# Interested readers can vary the random seed to test with different samples.
 # set.seed(8424)
 # n <- 300
 # sample_cal <- data[sample(nrow(data), n), ]
