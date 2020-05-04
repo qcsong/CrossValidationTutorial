@@ -496,7 +496,8 @@ library(caret)
 # R Code for data preparation is available from the authors.
 
 # Import data
-data <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_data.csv")
+data <- read.csv("https://git.io/JfsiA")
+
 
 # Fit the original model on the complete dataset
 mod <- lm(mach ~ as.factor(gender) * age + O + C + E + A + N, data=data)
@@ -513,7 +514,7 @@ cat(paste0("R2 of the population model is ", R2_pop, ";\n",
 Now we randomly draw a sample from this population and fit the same model.
 
 ```{r}
-sample_cal <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_sample.csv")
+sample_cal <- read.csv("https://git.io/JfsPt")
 # This is a random sample drawn from the whole Mach dataset using below code.
 # Interested readers can vary the random seed to test with different samples.
 # set.seed(8424)
