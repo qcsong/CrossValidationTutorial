@@ -10,7 +10,7 @@ output:
 
 # Appendix A
 
-Simulation is used to further demonstrate Observations 1, 2 and 3. Specifically, as each sample draw is influenced by sampling variation, results from the Shiny app may not always be as expected (i.e., by chance, it is possible for the calibrated model to fit better in the validation sample than in the calibration sample). We conducted three simulations, to help illustrate the expected result for each of the three observations. In each simulation, each sample draw and model fit were repeated 1,000 times, then the results were obtained by averaging across the 1,000 trials. Unless otherwise stated, we assume a quadratic relationship between arousal and performance. The overall simulation results support the observations that the model generalizability decreases as (a) the model becomes more complex, (b) calibration sample size decreases, and (c) effect size decreases.
+Simulation is used to further demonstrate Observations 1, 2 and 3. Specifically, as each sample draw is influenced by sampling variation, results from the Shiny app may not always be as expected (i.e., by chance, it is possible for the calibrated model to fit better in the validation sample than in the calibration sample). We conducted three simulations, to help illustrate the expected result for each of the three observations. In the simulations, each sample draw and model fit were repeated 1,000 times, then the results were obtained by averaging across the 1,000 trials. Unless otherwise stated, we assume a quadratic relationship between arousal and performance. The overall simulation results support the observations that the model generalizability decreases as (a) the model becomes more complex, (b) calibration sample size decreases, and (c) effect size decreases.
 
 ```{r}
 # Define a function to generate samples for simulation
@@ -224,7 +224,7 @@ Across 1,000 trials, $R_{validation}^2$ is smaller for the cubic regression mode
 
 ### Observation 3b: The model generalizes less well when calibration sample size is small
 
-Examine model generalizability for a smaller calibration sample size of 30 (as compared to 50). Apply the model obtained from the calibration sample to a new samples (validation) samples) and check the magnitude of prediction accuracy.
+Examine model generalizability for a smaller calibration sample size of 30 (as compared to 50). Apply the model obtained from the calibration sample to new samples (validation samples) and check the magnitude of prediction accuracy.
 
 ```{r}
 # Set a random seed
@@ -558,16 +558,16 @@ R2_kfold <- round(kfold_cv$results$Rsquared, 2)
 # Print results
 cat(paste0("k-fold cross-validated R2 is ", R2_kfold, ";\n",
            "k-fold cross-validated MSE is ", MSE_kfold, "."))
-
 ```
 
-It looks like there is a lot going on in this code, so let us talk about each of the input arguments (e.g., `data`, `method`, `trControl`) that are being specified. First, `data = sample_cal` specifies that the `sample_cal` dataset, the dataset that was used in the original analysis, is used to conduct the cross-validation. Next, `method = "lm"` specifies the statistical model as we need to indicate the model that will be used. In this case, we are using a linear (regression) model, and so we specify that `method = “lm”` and provide the actual form of the regression model that should be fitted. This is exactly the same model as the one fitted earlier. Again, we need to state what data to perform the cross-validation on (i.e., `data = sample_cal`), and lastly, to state that the specific method to be used, specified by `trControl = kfold_train_control`, tells the function that should correspond to the 10-fold cross-validation technique that we specified selected earlier, will be used to carry out the cross-validation.
+It looks like there is a lot going on in this code, so let us talk about each of the input arguments (e.g., `data`, `method`, `trControl`) that are being specified. First, `data = sample_cal` specifies that the `sample_cal` dataset, the dataset that was used in the original analysis, is used to conduct the cross-validation. Next, `method = “lm”` specifies the statistical model as we need to indicate the model that will be used. In this case, we are using a linear (regression) model, and so we specify that `method = “lm”` and provide the actual form of the regression model that should be fitted. This is exactly the same model as the one fitted earlier. Lastly, to specify the cross-validation method to be used, `trControl = kfold_train_control` tells the function that should correspond to the 10-fold cross-validation method that we specified earlier.
+
 
 All the results are saved in the object called `kfold_cv`, we retrieved $MSE$ and $R^2$ from the `kfold_cv` object. Note that `caret` calculates $RMSE$ by default, so $MSE$ is calculated as the mean of squares the $RMSE$'s for all folds.
 
 #### Monte Carlo cross-validation (MCCV)
 
-To conduct MCCV, we specify that `method = “LGOCV”` (i.e., leave-group-out cross-validation, which is another term for Monte-Carlo cross-validation) in the `trainControl()` function. We set the number of repetitions to be 200 (`number = 200`; i.e., we ask for the train-then-test procedure to be conducted 200 times). In addition, we specify the proportion of data that should be randomly held out as a test set in each of the 200 repetitions. For example, `p = .6` means that 75% of the data set will be used as the *training* set, and therefore that 40% (i.e., `1 - p`) of the data set will be used as the *test* set. These pre-specifications will once again be saved in an object named `mc_train_control`.
+To conduct MCCV, we specify that `method = “LGOCV”` (i.e., leave-group-out cross-validation, which is another term for Monte-Carlo cross-validation) in the `trainControl()` function. We set the number of repetitions to be 200 (`number = 200`; i.e., we ask for the train-then-test procedure to be conducted 200 times). In addition, we specify the proportion of data that should be randomly held out as a test set in each of the 200 repetitions. For example, `p = .6` means that 75% of the data set will be used as the *training* set, and therefore 40% (i.e., `1 - p`) of the data set will be used as the *test* set. These pre-specifications will once again be saved in an object named `mc_train_control`.
 
 Next, the `train()` function will again be used to implement MCCV. As with conducting *k*-fold cross-validation using `train()`, we specify the data, analytic method, and linear regression equation to be used when conducting the MCCV. Similar to the *k*-fold example, results are retrieved and calculated from the final `mc_cv` object.
 
