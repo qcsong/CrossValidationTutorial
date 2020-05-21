@@ -481,7 +481,7 @@ cat(paste0(
 
 # Empirical Example using Machiavellianism Dataset
 
-In this example, we treat the 70,798 observations as the population and fit a regression model to obtain the population estimates (see R code below). As a result, in the population, $R2{_population} = .28$, and $MSE{_population} = 0.45$.
+In this example, we treat the 70,798 observations as the population and fit a regression model to obtain the population estimates (see R code below). As a result, in the population, $R2_{population} = .28$, and $MSE_{population} = 0.45$.
 
 
 ```{r message = FALSE}
@@ -496,7 +496,7 @@ library(caret)
 # R Code for data preparation is available from the authors.
 
 # Import data
-data <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_data.csv")
+data <- read.csv("https://git.io/JfsiA")
 
 # Fit the original model on the complete dataset
 mod <- lm(mach ~ age + as.factor(gender) + as.factor(education) +
@@ -516,12 +516,14 @@ cat(paste0("R2 of the population model is ", R2_pop, ";\n",
 Now we randomly draw a sample from this population and fit the same model.
 
 ```{r}
-# sample_cal <- read.csv("https://git.io/JfsPt")
+sample_cal <- read.csv("https://git.io/JfsPt")
+
 # This is a random sample drawn from the whole Mach dataset using below code.
 # Interested readers can vary the random seed to test with different samples.
-set.seed(8424)
-n <- 100
-sample_cal <- data[sample(nrow(data), n), ]
+
+# set.seed(8424)
+# n <- 100
+# sample_cal <- data[sample(nrow(data), n), ]
 
 mod_cal <- lm(mach ~ age + as.factor(gender) + as.factor(education) +
                      as.factor(engnat) + as.factor(married) + 
@@ -551,9 +553,6 @@ set.seed(8424) # Set a random seed to replicate results
 k <- 10 # Number of folds
 
 kfold_train_control <- trainControl(method="cv", number=k)
-
-# kfold_cv <- train(mach ~ as.factor(gender) + age + O + C + E + A + N,
-#                   data=sample_cal, method="lm", trControl=kfold_train_control)
 
 kfold_cv <- train(mach ~ age + as.factor(gender) + as.factor(education) +
                          as.factor(engnat) + as.factor(married) + 
@@ -585,9 +584,6 @@ set.seed(8424) # Set a random seed to replicate results
 R <- 200 # Number of repetitions
 
 mc_train_control <- trainControl(method="LGOCV", p=.8, number=R)
-
-# mc_cv <- train(mach ~ as.factor(gender) * age + O + C + E + A + N,
-#                data=sample_cal, method="lm", trControl=mc_train_control)
 
 mc_cv <- train(mach ~ age + as.factor(gender) + as.factor(education) +
                       as.factor(engnat) + as.factor(married) + 
