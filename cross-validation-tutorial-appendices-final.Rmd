@@ -496,22 +496,13 @@ library(caret)
 # R Code for data preparation is available from the authors.
 
 # Import data
-# data <- read.csv("https://git.io/JfsiA")
-
-
-data <- read.csv("data/mach_data.csv")
-
-# f <- as.formula("mach ~ as.factor(gender) + age + as.factor(education) + 
-#                         as.factor(urban) + as.factor(engnat) + 
-#                         as.factor(religion) + as.factor(orientation) + 
-#                         as.factor(race) + as.factor(voted) + as.factor(married) + 
-#                         O + C + E + A + N")
-
-f <- as.formula("mach ~ age + as.factor(gender) + as.factor(education) + as.factor(engnat) +
-                        as.factor(married) + O + C + E + A + N")
+data <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_data.csv")
 
 # Fit the original model on the complete dataset
-mod <- lm(formula=f, data=data)
+mod <- lm(mach ~ age + as.factor(gender) + as.factor(education) +
+                 as.factor(engnat) + as.factor(married) + 
+                 O + C + E + A + N,
+          data=data)
 
 # Summary of the regression model fitted on the complete dataset
 R2_pop <- round(summary(mod)$r.squared, 2)
@@ -532,10 +523,10 @@ set.seed(8424)
 n <- 100
 sample_cal <- data[sample(nrow(data), n), ]
 
-# mod_cal <- lm(mach ~ as.factor(gender) + age + O + C + E + A + N,
-#               data=sample_cal)
-
-mod_cal <- lm(f, data=sample_cal)
+mod_cal <- lm(mach ~ age + as.factor(gender) + as.factor(education) +
+                     as.factor(engnat) + as.factor(married) + 
+                     O + C + E + A + N,
+              data=sample_cal)
 
 # Calculate and save results
 R2_cal <- round(summary(mod_cal)$r.squared, 2)
@@ -546,7 +537,7 @@ cat(paste0("R2 of the calibration model is ", R2_cal, ";\n",
            "MSE of the calibration model is ", MSE_cal, "."))
 ```
 
-We notice that in the sample ($n = 150$), the regression model has a larger $R^2$ and a smaller $MSE$ than the population model.
+We notice that in the sample ($n = 100$), the regression model has a larger $R^2$ and a smaller $MSE$ than the population model.
 
 ### Cross-Validation
 
@@ -555,7 +546,7 @@ We notice that in the sample ($n = 150$), the regression model has a larger $R^2
 We will carry out a 10-fold cross-validation. First, call the `trainControl()` function, and specify the method as *k*-fold cross-validation (i.e., “`CV`”), where the number of folds is equal to 10. Save the specified information in an object named `kfold_train_control`. Then, call the `train()` function to implement the k-fold cross-validation. The cross-validation results are saved in the object, "`kfold_cv`". 
 
 ```{r}
-# set.seed(8424) # Set a random seed to replicate results
+set.seed(8424) # Set a random seed to replicate results
 
 k <- 10 # Number of folds
 
@@ -564,7 +555,10 @@ kfold_train_control <- trainControl(method="cv", number=k)
 # kfold_cv <- train(mach ~ as.factor(gender) + age + O + C + E + A + N,
 #                   data=sample_cal, method="lm", trControl=kfold_train_control)
 
-kfold_cv <- train(f, data=sample_cal, method="lm", trControl=kfold_train_control)
+kfold_cv <- train(mach ~ age + as.factor(gender) + as.factor(education) +
+                         as.factor(engnat) + as.factor(married) + 
+                         O + C + E + A + N,
+                 data=sample_cal, method="lm", trControl=kfold_train_control)
 
 # Calculate and save results
 MSE_kfold <- round(mean(kfold_cv$resample$RMSE^2), 2)
@@ -577,7 +571,6 @@ cat(paste0("k-fold cross-validated R2 is ", R2_kfold, ";\n",
 
 It looks like there is a lot going on in this code, so let us talk about each of the input arguments (e.g., `data`, `method`, `trControl`) that are being specified. First, `data = sample_cal` specifies that the `sample_cal` dataset, the dataset that was used in the original analysis, is used to conduct the cross-validation. Next, `method = “lm”` specifies the statistical model as we need to indicate the model that will be used. In this case, we are using a linear (regression) model, and so we specify that `method = “lm”` and provide the actual form of the regression model that should be fitted. This is exactly the same model as the one fitted earlier. Lastly, to specify the cross-validation method to be used, `trControl = kfold_train_control` tells the function that should correspond to the 10-fold cross-validation method that we specified earlier.
 
-
 All the results are saved in the object called `kfold_cv`, we retrieved $MSE$ and $R^2$ from the `kfold_cv` object. Note that `caret` calculates $RMSE$ by default, so $MSE$ is calculated as the mean of squares the $RMSE$'s for all folds.
 
 #### Monte Carlo cross-validation (MCCV)
@@ -587,7 +580,7 @@ To conduct MCCV, we specify that `method = “LGOCV”` (i.e., leave-group-out c
 Next, the `train()` function will again be used to implement MCCV. As with conducting *k*-fold cross-validation using `train()`, we specify the data, analytic method, and linear regression equation to be used when conducting the MCCV. Similar to the *k*-fold example, results are retrieved and calculated from the final `mc_cv` object.
 
 ```{r}
-# set.seed(8424) # Set a random seed to replicate results
+set.seed(8424) # Set a random seed to replicate results
 
 R <- 200 # Number of repetitions
 
@@ -596,7 +589,10 @@ mc_train_control <- trainControl(method="LGOCV", p=.8, number=R)
 # mc_cv <- train(mach ~ as.factor(gender) * age + O + C + E + A + N,
 #                data=sample_cal, method="lm", trControl=mc_train_control)
 
-mc_cv <- train(f, data=sample_cal, method="lm", trControl=mc_train_control)
+mc_cv <- train(mach ~ age + as.factor(gender) + as.factor(education) +
+                      as.factor(engnat) + as.factor(married) + 
+                      O + C + E + A + N,
+               data=sample_cal, method="lm", trControl=mc_train_control)
 
 # Calculate and save results
 MSE_mc <- round(mean(mc_cv$resample$RMSE^2), 2)
