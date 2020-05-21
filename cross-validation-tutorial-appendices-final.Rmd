@@ -513,7 +513,7 @@ cat(paste0("R2 of the population model is ", R2_pop, ";\n",
 
 ### Model Overfitting
 
-Now we randomly draw a sample from this population and fit the same model.
+Let us use a (calibration) sample from this population and fit the same model.
 
 ```{r}
 sample_cal <- read.csv("https://git.io/JfsPt")
@@ -543,7 +543,7 @@ We notice that in the sample ($n = 100$), the regression model has a larger $R^2
 
 ### Cross-Validation
 
-#### *k*-fold
+#### *k*-fold cross-validation
 
 We will carry out a 10-fold cross-validation. First, call the `trainControl()` function, and specify the method as *k*-fold cross-validation (i.e., “`CV`”), where the number of folds is equal to 10. Save the specified information in an object named `kfold_train_control`. Then, call the `train()` function to implement the k-fold cross-validation. The cross-validation results are saved in the object, "`kfold_cv`". 
 
