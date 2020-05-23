@@ -570,7 +570,7 @@ All the results are saved in the object called `kfold_cv`, we retrieved $MSE$ an
 
 #### Monte Carlo cross-validation (MCCV)
 
-To conduct MCCV, we specify that `method = “LGOCV”` (i.e., leave-group-out cross-validation, which is another term for Monte-Carlo cross-validation) in the `trainControl()` function. We set the number of repetitions to be 200 (`number = 200`; i.e., we ask for the train-then-test procedure to be conducted 200 times). In addition, we specify the proportion of data that should be randomly held out as a test set in each of the 200 repetitions. For example, `p = .6` means that 60% of the data set will be used as the *training* set, and therefore 40% (i.e., `1 - p`) of the data set will be used as the *test* set. These pre-specifications will once again be saved in an object named `mc_train_control`.
+To conduct MCCV, we specify that `method = “LGOCV”` (i.e., leave-group-out cross-validation, which is another term for Monte-Carlo cross-validation) in the `trainControl()` function. We set the number of repetitions to be 200 (`number = 200`; i.e., we ask for the train-then-test procedure to be conducted 200 times). In addition, we specify the proportion of data that should be randomly held out as a test set in each of the 200 repetitions. For example, `p = .8` means that 80% of the data set will be used as the *training* set, and therefore 20% (i.e., `1 - p`) of the data set will be used as the *test* set. These pre-specifications will once again be saved in an object named `mc_train_control`.
 
 Next, the `train()` function will again be used to implement MCCV. As with conducting *k*-fold cross-validation using `train()`, we specify the data, analytic method, and linear regression equation to be used when conducting the MCCV. Similar to the *k*-fold example, results are retrieved and calculated from the final `mc_cv` object.
 
@@ -579,7 +579,7 @@ set.seed(2020) # Set a random seed to replicate results
 
 R <- 200 # Number of repetitions
 
-mc_train_control <- trainControl(method="LGOCV", p=.6, number=R)
+mc_train_control <- trainControl(method="LGOCV", p=.8, number=R)
 
 mc_cv <- train(mach ~ age + as.factor(gender) + O + C + E + A + N,
                data=sample_cal, method="lm", trControl=mc_train_control)
