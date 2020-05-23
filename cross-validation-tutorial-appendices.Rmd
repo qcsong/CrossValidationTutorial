@@ -496,7 +496,8 @@ library(caret)
 # R Code for data preparation is available from the authors.
 
 # Import data
-data <- read.csv("https://git.io/JfsiA")
+# data <- read.csv("https://git.io/JfsiA")
+data <- read.csv("data/mach_data.csv")
 
 # Fit the model on the complete dataset
 mod <- lm(mach ~ age + as.factor(gender) + O + C + E + A + N,
@@ -514,7 +515,8 @@ cat(paste0("R2 of the population model is ", R2_pop, ";\n",
 Let us use a (calibration) sample from this population and fit the same model.
 
 ```{r}
-sample_cal <- read.csv("https://git.io/JfsPt")
+# sample_cal <- read.csv("https://git.io/JfsPt")
+sample_cal <- read.csv("data/mach_sample.csv")
 
 # This is a random sample drawn from the whole Mach dataset using below code.
 # Interested readers can vary the random seed to test with different samples.
