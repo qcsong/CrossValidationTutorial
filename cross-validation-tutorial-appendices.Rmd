@@ -39,7 +39,7 @@ In the following code, the `lm()` function was used to fit the regression models
 
 ```{r}
 # Set a random seed
-set.seed(8424)
+set.seed(2020)
 
 # Set population effect size
 R2_pop <- .25
@@ -100,7 +100,7 @@ Apply the model obtained from the calibration sample to a new (validation) sampl
 
 ```{r}
 # Set a random seed
-set.seed(8424)
+set.seed(2020)
  
 # Set population effect size
 R2_pop <- .25
@@ -154,7 +154,7 @@ cat(paste0(
 
 ```
 
-Notice that $R_{validation}^2$ is smaller than $R_{calibration}^2$: there is a 15% reduction in R2 ($\frac{.27 - .23}{.27}=.15$). Also, $MSE_{validation}$ is larger than $MSE_{calibration}$: there is a 0.17 increase in MSE ($1.30-1.13=0.17$). This suggests that when a model fitted on one (calibration) sample is used to make predictions in a new (validation) sample, the model performs less well in the new sample.
+Notice that $R_{validation}^2$ is smaller than $R_{calibration}^2$: there is a 15% reduction in R2 ($\frac{.27 - .23}{.27}=.15$). Also, $MSE_{validation}$ is larger than $MSE_{calibration}$: there is a 0.17 increase in MSE ($1.31-1.14=0.17$). This suggests that when a model fitted on one (calibration) sample is used to make predictions in a new (validation) sample, the model performs less well in the new sample.
 
 ## Observation 3: Model Generalizability is Influenced by (a) Model Complexity, (b) Sample Size, and (c) Effect Size
 
@@ -166,7 +166,7 @@ Now let us explore how model complexity influences model generalizability. Incre
 
 ```{r}
 # Set a random seed
-set.seed(8424)
+set.seed(2020)
 
 # Set population effect size
 R2_pop <- .25
@@ -228,7 +228,7 @@ Examine model generalizability for a smaller calibration sample size of 30 (as c
 
 ```{r}
 # Set a random seed
-set.seed(8424)
+set.seed(2020)
 
 # Set population effect size
 R2_pop <- .25
@@ -291,7 +291,7 @@ Examine model generalizability when the population effect size is $\rho^2 = .04$
 
 ```{r}
 # Set a random seed
-set.seed(8424)
+set.seed(2020)
 
 # Set population effect size
 R2_pop <- .04 # smaller effect size
@@ -356,7 +356,7 @@ The R code below provides a step-by-step demonstration of a 5-fold cross-validat
 
 ```{r}
 # Set random seed
-set.seed(8424)
+set.seed(2020)
 
 # Sample size
 n <- 300
@@ -430,7 +430,7 @@ The R code below provides a step-by-step demonstration of a Monte-Carlo cross-va
 ```{r}
 # Using the same dataset and model as the above k-fold example
 
-set.seed(8424)
+set.seed(2020)
 
 # Specify to repeat 100 times
 rep <- 100
@@ -499,9 +499,7 @@ library(caret)
 data <- read.csv("https://git.io/JfsiA")
 
 # Fit the original model on the complete dataset
-mod <- lm(mach ~ age + as.factor(gender) + as.factor(education) +
-                 as.factor(engnat) + as.factor(married) + 
-                 O + C + E + A + N,
+mod <- lm(mach ~ age + as.factor(gender) + O + C + E + A + N,
           data=data)
 
 # Summary of the regression model fitted on the complete dataset
@@ -521,13 +519,11 @@ sample_cal <- read.csv("https://git.io/JfsPt")
 # This is a random sample drawn from the whole Mach dataset using below code.
 # Interested readers can vary the random seed to test with different samples.
 
-# set.seed(8424)
+# set.seed(2020)
 # n <- 100
 # sample_cal <- data[sample(nrow(data), n), ]
 
-mod_cal <- lm(mach ~ age + as.factor(gender) + as.factor(education) +
-                     as.factor(engnat) + as.factor(married) + 
-                     O + C + E + A + N,
+mod_cal <- lm(mach ~ age + as.factor(gender) + O + C + E + A + N,
               data=sample_cal)
 
 # Calculate and save results
@@ -548,16 +544,14 @@ We notice that in the sample ($n = 100$), the regression model has a larger $R^2
 We will carry out a 10-fold cross-validation. First, call the `trainControl()` function, and specify the method as *k*-fold cross-validation (i.e., “`CV`”), where the number of folds is equal to 10. Save the specified information in an object named `kfold_train_control`. Then, call the `train()` function to implement the k-fold cross-validation. The cross-validation results are saved in the object, "`kfold_cv`". 
 
 ```{r}
-set.seed(8424) # Set a random seed to replicate results
+set.seed(2020) # Set a random seed to replicate results
 
 k <- 10 # Number of folds
 
 kfold_train_control <- trainControl(method="cv", number=k)
 
-kfold_cv <- train(mach ~ age + as.factor(gender) + as.factor(education) +
-                         as.factor(engnat) + as.factor(married) + 
-                         O + C + E + A + N,
-                 data=sample_cal, method="lm", trControl=kfold_train_control)
+kfold_cv <- train(mach ~ age + as.factor(gender) + O + C + E + A + N,
+                  data=sample_cal, method="lm", trControl=kfold_train_control)
 
 # Calculate and save results
 MSE_kfold <- round(mean(kfold_cv$resample$RMSE^2), 2)
@@ -579,15 +573,13 @@ To conduct MCCV, we specify that `method = “LGOCV”` (i.e., leave-group-out c
 Next, the `train()` function will again be used to implement MCCV. As with conducting *k*-fold cross-validation using `train()`, we specify the data, analytic method, and linear regression equation to be used when conducting the MCCV. Similar to the *k*-fold example, results are retrieved and calculated from the final `mc_cv` object.
 
 ```{r}
-set.seed(8424) # Set a random seed to replicate results
+set.seed(2020) # Set a random seed to replicate results
 
 R <- 200 # Number of repetitions
 
 mc_train_control <- trainControl(method="LGOCV", p=.8, number=R)
 
-mc_cv <- train(mach ~ age + as.factor(gender) + as.factor(education) +
-                      as.factor(engnat) + as.factor(married) + 
-                      O + C + E + A + N,
+mc_cv <- train(mach ~ age + as.factor(gender) + O + C + E + A + N,
                data=sample_cal, method="lm", trControl=mc_train_control)
 
 # Calculate and save results
