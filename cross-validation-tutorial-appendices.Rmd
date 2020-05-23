@@ -220,7 +220,7 @@ cat(paste0(
 
 ```
 
-Across 1,000 trials, $R_{validation}^2$ is smaller for the cubic regression model ($R_{validation}^2 = 0.20$) than for the quadratic regression model ($R_{validation}^2 = 0.23$, see Observation 2). Similarly, $MSE_{validation}$ is larger for the cubic regression model ($MSE_{validation} = 1.43$) than for the quadratic regression model ($MSE_{validation} = 1.30$, see Observation 2). Consistent with Observation 3a, a complex model generalizes less well than a simpler model when applied to a new sample.
+Across 1,000 trials, $R_{validation}^2$ is smaller for the cubic regression model ($R_{validation}^2 = 0.20$) than for the quadratic regression model ($R_{validation}^2 = 0.23$, see Observation 2). Similarly, $MSE_{validation}$ is larger for the cubic regression model ($MSE_{validation} = 1.43$) than for the quadratic regression model ($MSE_{validation} = 1.31$, see Observation 2). Consistent with Observation 3a, a complex model generalizes less well than a simpler model when applied to a new sample.
 
 ### Observation 3b: The model generalizes less well when calibration sample size is small
 
@@ -283,7 +283,7 @@ cat(paste0(
 
 ```
 
-Notice that, across 1,000 trials, the average $R_{validation}^2 = 0.21$ is smaller when the same quadratic regression model was fitted on a small sample size ($N = 30$), as compared to when the quadratic regression model was fitted on a larger sample size ($N = 50$; average $R_{validation}^2 = 0.23$, see Observation 2). Similarly, the average $MSE_{validation} = 1.38$ is larger when the same quadratic regression model was fitted on a small sample size ($N = 30$), as compared to when the quadratic regression model was fitted on a larger sample size ($N = 50$; average $MSE_{validation} = 1.30$, see Observation 2). This suggests that a model fitted on a smaller calibration sample tends to generalize less well in a new sample, as compared to a model fitted on a larger calibration sample. 
+Notice that, across 1,000 trials, the average $R_{validation}^2 = 0.22$ is smaller when the same quadratic regression model was fitted on a small sample size ($N = 30$), as compared to when the quadratic regression model was fitted on a larger sample size ($N = 50$; average $R_{validation}^2 = 0.23$, see Observation 2). Similarly, the average $MSE_{validation} = 1.38$ is larger when the same quadratic regression model was fitted on a small sample size ($N = 30$), as compared to when the quadratic regression model was fitted on a larger sample size ($N = 50$; average $MSE_{validation} = 1.31$, see Observation 2). This suggests that a model fitted on a smaller calibration sample tends to generalize less well in a new sample, as compared to a model fitted on a larger calibration sample. 
 
 ### Observation 3c: The model generalizes less well when the population effect size is small
 
@@ -346,7 +346,7 @@ cat(paste0(
 
 ```
 
-Notice that, when the population effect size is .04, across 1,000 trials, the average $R_{validation}^2 = .03$ is less than half the average $R_{calibration}^2 = .08$ (63% reduction versus 15% reduction in Observation 2), and the average $MSE_{validation} = 10.42$ is less than the average $MSE_{calibration} = 9.03$ (1.39 increase versus 0.17 increase in Observation 2). This suggests that, when the population effect size is small, the model tend to generalize less well in a new sample. 
+Notice that, when the population effect size is .04, across 1,000 trials, the average $R_{validation}^2 = .03$ is less than half the average $R_{calibration}^2 = .08$ (63% reduction versus 15% reduction in Observation 2), and the average $MSE_{validation} = 10.48$ is larger than the average $MSE_{calibration} = 9.10$ (1.39 increase versus 0.17 increase in Observation 2). This suggests that, when the population effect size is small, the model tend to generalize less well in a new sample. 
 
 # Appendix B
 
@@ -481,7 +481,7 @@ cat(paste0(
 
 # Empirical Example using Machiavellianism Dataset
 
-In this example, we treat the 70,798 observations as the population and fit a regression model to obtain the population estimates (see R code below). As a result, in the population, $R2_{population} = .28$, and $MSE_{population} = 0.45$.
+In this example, we treat the 71,992 observations as the population and fit a regression model to obtain the population estimates (see R code below). As a result, in the population, $R2_{population} = .28$, and $MSE_{population} = 0.45$.
 
 
 ```{r message = FALSE}
@@ -497,6 +497,8 @@ library(caret)
 
 # Import data
 data <- read.csv("https://git.io/JfsiA")
+# data <- read.csv("https://raw.githubusercontent.com/qcsong/CrossValidationTutorial/master/data/mach_data.csv")
+
 
 # Fit the original model on the complete dataset
 mod <- lm(mach ~ age + as.factor(gender) + O + C + E + A + N,
@@ -520,7 +522,7 @@ sample_cal <- read.csv("https://git.io/JfsPt")
 # Interested readers can vary the random seed to test with different samples.
 
 # set.seed(2020)
-# n <- 100
+# n <- 300
 # sample_cal <- data[sample(nrow(data), n), ]
 
 mod_cal <- lm(mach ~ age + as.factor(gender) + O + C + E + A + N,
