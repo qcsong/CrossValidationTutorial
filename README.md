@@ -1,6 +1,6 @@
 # Code for Cross-Validation Tutorial
 
-This repository is contains code for the appendices of the cross-validation tutorial:
+This repository contains code and data for the cross-validation tutorial:
 
 [*add citation here when it's available*]
 
