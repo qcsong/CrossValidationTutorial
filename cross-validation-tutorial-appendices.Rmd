@@ -8,7 +8,7 @@ output:
     df_print: paged
 ---
 
-# Appendix A
+# Appendix A: 
 
 Simulation is used to further demonstrate Observations 1, 2 and 3. Specifically, as each sample draw is influenced by sampling variation, results from the Shiny app may not always be as expected (i.e., by chance, it is possible for the calibrated model to fit better in the validation sample than in the calibration sample). We conducted three simulations, to help illustrate the expected result for each of the three observations. In the simulations, each sample draw and model fit were repeated 1,000 times, then the results were obtained by averaging across the 1,000 trials. Unless otherwise stated, we assume a quadratic relationship between arousal and performance. The overall simulation results support the observations that the model generalizability decreases as (a) the model becomes more complex, (b) calibration sample size decreases, and (c) effect size decreases.
 
