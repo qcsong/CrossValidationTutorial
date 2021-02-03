@@ -24,16 +24,18 @@ generate_sample <- function(N, R2){
   arousal <- rnorm(n = N, mean = mean_arousal, sd = sd_arousal) 
   performance <- (300 - (arousal - 6) ^ 2) / 60 
    
-  # add noise to performance score  
+  # add noise to performance score
+  # calculate signal-to-noise ratio
+  # (based on Muirhead, 1985, p. 923) 
   snr <- R2 / (1 - R2)
-  # calculate signal-to-noise ratio (based on Muirhead, 1985, p. 923) 
    
   sd_performance <- 0.6364
   # this sd is approximated using a separate simulation;  
   # simulation code is available from the authors 
-
+  
+  # calculate standard deviation of noise
+  # (based on Hastie et al., 2009, p. 401)
   sd_noise <- sd_performance / sqrt(snr)
-  # based on Hastie et al. (2009), p. 401 
   
   # generate and add noise
   noise <- rnorm(n = N, sd = sd_noise)  
